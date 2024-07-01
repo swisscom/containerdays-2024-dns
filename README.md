@@ -20,7 +20,7 @@ For docker engine / virtualization we use [colima](https://github.com/abiosoft/c
 
 ## Prerequisites
 
-- colima:
+- colima (We use colima to run docker on our Mac's, any other virtualization should also work.):
   - brew install colima
   - colima start dns1 -c 4 -m 4 --network-address
   - colima ssh -p dns1 # ssh onto colima node
