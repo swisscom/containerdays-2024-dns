@@ -1,0 +1,31 @@
+---
+##
+## MariaDB chart configuration
+## Defaults: https://github.com/bitnami/charts/blob/master/bitnami/mariadb/values.yaml
+##
+image:
+  repository: bitnami/mariadb
+  tag: 11.1.2
+  pullPolicy: IfNotPresent
+
+fullnameOverride: mariadb
+architecture: standalone
+
+auth:
+  username: powerdns
+  database: powerdns
+
+primary:
+  name: master
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+
+metrics:
+  enabled: true
+  ## How the MariaDB host address is discovered:
+  ## dns: using service name of mariadb, requires working dns in cluster (default)
+  ## env: using service ip of mariadb by using the exposed env of the mariadb service
+  serviceDiscovery: dns
