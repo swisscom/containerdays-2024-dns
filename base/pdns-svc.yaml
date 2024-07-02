@@ -33,15 +33,15 @@ spec:
       port: 8081
       targetPort: 8081
       name: api
-      nodePort: 30002
+      nodePort: 30004
     - port: 53
       targetPort: 53
       protocol: UDP
       name: dns-udp
-      nodePort: 30002
+      nodePort: 30003
     - port: 53
       targetPort: 53
       protocol: TCP
       name: dns-tcp
-      nodePort: 30002
+      nodePort: 30003
   type: NodePort

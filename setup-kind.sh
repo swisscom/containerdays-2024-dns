@@ -5,14 +5,23 @@ set -e
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Check if cluster name is provided
+# Check if id of cluster is porvided
 if [ -z "$1" ]; then
-  echo -e "${RED}Error: No cluster name provided${NC}"
-  echo "Usage: $0 <clustername>"
+  echo -e "${RED}Error: Id of cluster to setup not provided${NC}"
+  echo "Usage: $0 <id_of_cluster> [clusternameprefix]"
   exit 1
 fi
 
-clustername=$1
+# Check if the first parameter is a number
+re='^[0-9]+$'
+if ! [[ $1 =~ $re ]] ; then
+   echo -e "${RED}Error: '$1' is not a number${NC}" >&2; exit 1
+fi
+
+id_of_clusters=$1
+clusternameprefix=${2:-dns}  # Set default cluster name to 'dns' if not provided
+
+clustername="${clusternameprefix}-$id_of_clusters"
 
 # kind create cluster --name $clustername --config cluster-0-cfg.yaml  || { echo -e "${RED}Error: Failed to create cluster${NS}"; exit 1; }
 if ! kind get clusters | grep -q "^${clustername}$"; then
