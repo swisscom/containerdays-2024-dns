@@ -10,6 +10,9 @@ For docker engine / virtualization we use [colima](https://github.com/abiosoft/c
 - colima:
   - brew install colima
   - colima start dns1 -c 4 -m 4 --network-address
+  - colima ssh -p dns1 # ssh onto colima node
+    - sudo sysctl fs.inotify.max_user_watches=524288
+    - sudo sysctl fs.inotify.max_user_instances=512
 - docker cli: brew install docker
 - kind: brew install kind
 

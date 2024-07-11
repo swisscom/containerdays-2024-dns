@@ -20,7 +20,6 @@ data:
 
     script="$(basename "${0}")"
     echo "[${script}] Starting..."
-
     apk add --no-cache curl
 
     for domain in ${DOMAINS//,/ }
