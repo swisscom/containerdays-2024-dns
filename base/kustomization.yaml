@@ -8,16 +8,4 @@ resources:
   - pdns-svc.yaml
   - coredns-ext-svc.yaml
   - curl-pod.yaml
-
-configMapGenerator:
-  - name: mariadb-values
-    files:
-      - values.yaml=./mariadb-values.yaml
-  # - name: external-dns-values
-  #   namespace: telco-dns
-  #   files:
-  #     - values.yaml=./external-dns-values.yaml
-  # - name: core-dns-values
-  #   namespace: telco-dns
-  #   files:
-  #     - values.yaml=./core-dns-values.yaml
+  - kube-system-coredns-cm.yaml
