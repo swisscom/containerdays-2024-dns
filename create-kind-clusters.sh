@@ -25,7 +25,7 @@ mkdir -p tmp
 # Loop to create the specified number of clusters
 for (( i=0; i<$number_of_clusters; i++ ))
 do
-  config_file="cluster-cfg.yaml"
+  config_file="templates/cluster-cfg.yaml"
   temp_config="tmp/cluster-$i-cfg.yaml"
 
   if [ -f "$config_file" ]; then

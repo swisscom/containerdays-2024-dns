@@ -71,8 +71,8 @@ txtSuffix: ""
 provider: pdns
 
 pdns:
-  apiUrl: http://pdns-service.default.svc.cluster.local
-  apiPort: 8081
+  apiUrl: http://172.18.0.3
+  apiPort: 30004
   apiKey: "auth_key"
 
 extraVolumes:
@@ -90,10 +90,10 @@ initContainers:
       # List of DNS Zones to create
       # no dashes in variable name
       - name: DOMAINS
-        value: "example.org."
+        value: "5gc.3gppnetwork.org."
       # PowerDNS configuration
       - name: POWERDNS_SERVER
-        value: 172.18.0.3:30004
+        value: http://172.18.0.3:30004
       - name: POWERDNS_API_KEY
         value: "auth_key"
       # set to true if you want debug prints from the startup script

@@ -9,6 +9,8 @@ fi
 
 clustername=$1
 
+if ! docker image list | grep nginx:latest; then
+  docker pull nginx
+
 kind load docker-image nginx:latest --name $clustername
-docker pull nginx
 kubectl apply -f nginx.yaml --context kind-$clustername

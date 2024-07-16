@@ -90,7 +90,7 @@ initContainers:
       # List of DNS Zones to create
       # no dashes in variable name
       - name: DOMAINS
-        value: "example.org."
+        value: "5gc.3gppnetwork.org."
       # PowerDNS configuration
       - name: POWERDNS_SERVER
         value: "http://pdns-service.default.svc.cluster.local:8081"

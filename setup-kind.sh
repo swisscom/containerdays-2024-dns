@@ -73,7 +73,7 @@ for cluster in $clusters; do
   # Extract the last character of the cluster name as the cluster ID
   cluster_id=${cluster: -1}
   
-  values_file="external-dns-values.yaml"
+  values_file="templates/external-dns-values.yaml"
   config_folder="tmp/cluster-$id_of_clusters"
   mkdir -p $config_folder
   tmp_config="$config_folder/external-dns-values-$cluster_id.yaml"
@@ -84,7 +84,10 @@ for cluster in $clusters; do
   if [ "$cluster_id" != "$id_of_clusters" ]; then
     # Modify apiServerPort in the copied config file
     ipv4_address=$(get_ipv4_address "dns-$cluster_id-control-plane")
-    sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: $ipv4_address:30004|g" "$tmp_config"
+    sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: http://$ipv4_address:30004|g" "$tmp_config"
+    rm "$tmp_config"-e
+    sed -i'' -e "s|apiUrl: http://pdns-service.default.svc.cluster.local|apiUrl: http://$ipv4_address|g" "$tmp_config"
+    sed -i'' -e "s|apiPort: 8081|apiPort: 30004|g" "$tmp_config"
     rm "$tmp_config"-e
   fi
 
@@ -97,13 +100,31 @@ for cluster in $clusters; do
   fi
 done
 
+values_file="templates/core-dns-values.yaml"
+config_folder="tmp/cluster-$id_of_clusters"
+mkdir -p $config_folder
+tmp_config="$config_folder/core-dns-values.yaml"
+cp "$values_file" "$tmp_config"
+
+for cluster in $clusters; do
+  # Extract the last character of the cluster name as the cluster ID
+  cluster_id=${cluster: -1}
+
+  if [ "$cluster_id" != "$id_of_clusters" ]; then
+    # Modify apiServerPort in the copied config file
+    ipv4_address=$(get_ipv4_address "dns-$cluster_id-control-plane")
+    sed -i'' -e "/parameters: 5gc.3gppnetwork.org. 10.96.0.12/ s/$/ $ipv4_address:30003/" "$tmp_config"
+    rm "$tmp_config"-e
+  fi
+done
+
 RELEASE_NAME=coredns
 if release_exists; then
     echo "Helm release '$RELEASE_NAME' is already installed. Skipping."
 else
     echo "Helm release '$RELEASE_NAME' is not installed. Installing..."
-  helm repo add coredns https://coredns.github.io/helm
-    helm install --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f core-dns-values.yaml
+    helm repo add coredns https://coredns.github.io/helm
+    helm install --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f $tmp_config
 fi
 
 
