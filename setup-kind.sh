@@ -33,7 +33,7 @@ pull_image_if_not_exists() {
   local image=$1
   local version=$2
   if ! docker image list | grep $image | grep $version; then
-    docker pull "$image"
+    docker pull "$image:$version"
   else
     echo "Image $image already exists locally. Skipping pull."
   fi
