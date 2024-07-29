@@ -45,6 +45,9 @@ kind load docker-image coredns/coredns:1.11.1 --name $clustername
 pull_image_if_not_exists infoblox/dnstools "latest"
 kind load docker-image infoblox/dnstools:latest --name $clustername
 
+pull_image_if_not_exists registry.k8s.io/e2e-test-images/jessie-dnsutils 1.3
+kind load docker-image registry.k8s.io/e2e-test-images/jessie-dnsutils:1.3 --name $clustername
+
 pull_image_if_not_exists powerdns/pdns-auth-49 "latest"
 kind load docker-image powerdns/pdns-auth-49 --name $clustername
 
