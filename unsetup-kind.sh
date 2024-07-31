@@ -46,6 +46,7 @@ for cluster in $clusters; do
   else
     echo "Helm release '$RELEASE_NAME' is not installed."
   fi
+  kubectl --context kind-$clustername delete clusterrolebinding dnsendpoint-read-binding-$cluster_id
 done
 
 

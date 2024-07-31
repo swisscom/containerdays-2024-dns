@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pdns-deployment
+  namespace: dns
 spec:
   replicas: 1
   selector:
@@ -32,4 +33,3 @@ spec:
         securityContext:
           runAsUser: 0
           runAsGroup: 0
-

@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: init-create-pdns-zones-script
+  namespace: dns
 data:
   add_dns_zones.sh: |
     #!/usr/bin/env bash

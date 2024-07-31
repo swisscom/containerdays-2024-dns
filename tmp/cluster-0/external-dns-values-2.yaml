@@ -51,9 +51,9 @@ triggerLoopOnEvent: true
 sources:
   - service
   - ingress
-  # - istio-gateway
-  # - istio-virtualservice
-  # - crd
+#  - istio-gateway
+#  - istio-virtualservice
+  - crd
 
 policy: sync  # to allow as well the deletion of DNS entries
 
@@ -62,7 +62,7 @@ policy: sync  # to allow as well the deletion of DNS entries
 registry: txt
 # When using a registry other than "noop", specifies a name that
 # uniquely identifies this instance of external-dns.
-txtOwnerId: "dns0-"
+txtOwnerId: "dns-2"
 # Specifies a prefix for the domain names of TXT records created by the "txt" registry. Optional. Mutually exclusive with `txtSuffix`.
 txtPrefix: "demo-"
 # Specifies a suffix for the domain names of TXT records created by the "txt" registry. Optional. Mutually exclusive with `txtPrefix`.

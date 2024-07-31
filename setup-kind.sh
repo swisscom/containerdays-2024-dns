@@ -5,6 +5,8 @@ set -e
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+ns=dns
+
 # Check if id of cluster is porvided
 if [ -z "$1" ]; then
   echo -e "${RED}Error: Id of cluster to setup not provided${NC}"
@@ -18,10 +20,10 @@ if ! [[ $1 =~ $re ]] ; then
    echo -e "${RED}Error: '$1' is not a number${NC}" >&2; exit 1
 fi
 
-id_of_clusters=$1
+this_cluster_id=$1
 clusternameprefix=${2:-dns}  # Set default cluster name to 'dns' if not provided
 
-clustername="${clusternameprefix}-$id_of_clusters"
+clustername="${clusternameprefix}-$this_cluster_id"
 
 # kind create cluster --name $clustername --config cluster-0-cfg.yaml  || { echo -e "${RED}Error: Failed to create cluster${NS}"; exit 1; }
 if ! kind get clusters | grep -q "^${clustername}$"; then
@@ -60,7 +62,7 @@ kind load docker-image bash:latest --name $clustername
 echo "checking for external-dns"
 
 release_exists() {
-    helm list --kube-context kind-$clustername | grep -w "$RELEASE_NAME" > /dev/null 2>&1
+    helm list --kube-context kind-$clustername --namespace $ns | grep -w "$RELEASE_NAME" > /dev/null 2>&1
     return $?
 }
 
@@ -71,40 +73,59 @@ get_ipv4_address() {
 }
 
 clusters=$(kind get clusters)
+external_dns_chart_version="8.3.3"
 
 for cluster in $clusters; do
   # Extract the last character of the cluster name as the cluster ID
   cluster_id=${cluster: -1}
   
   values_file="templates/external-dns-values.yaml"
-  config_folder="tmp/cluster-$id_of_clusters"
+  config_folder="tmp/cluster-$this_cluster_id"
   mkdir -p $config_folder
   tmp_config="$config_folder/external-dns-values-$cluster_id.yaml"
 
   # Make a temporary copy of the configuration file
   cp "$values_file" "$tmp_config"
 
-  if [ "$cluster_id" != "$id_of_clusters" ]; then
+  echo "before $cluster_id $this_cluster_id and dns is $ns"
+
+  # Modify txtOwnerId in the copied config file for each external-dns instance
+  sed -i'' -e "s|txtOwnerId: \"dns-\"|txtOwnerId: \"dns-$cluster_id\"|g" "$tmp_config"
+  rm "$tmp_config"-e
+
+  if [ "$cluster_id" != "$this_cluster_id" ]; then
     # Modify apiServerPort in the copied config file
+    echo "Modifying apiServerPort in the copied config file and the namespace is $ns"
     ipv4_address=$(get_ipv4_address "dns-$cluster_id-control-plane")
     sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: http://$ipv4_address:30004|g" "$tmp_config"
     rm "$tmp_config"-e
     sed -i'' -e "s|apiUrl: http://pdns-service.default.svc.cluster.local|apiUrl: http://$ipv4_address|g" "$tmp_config"
     sed -i'' -e "s|apiPort: 8081|apiPort: 30004|g" "$tmp_config"
     rm "$tmp_config"-e
+  else
+    echo "Modifying apiServerPort in the copied config file and the namespace is $ns"
+    sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: http://pdns-service.$ns.svc.cluster.local:8081|g" "$tmp_config"
+    rm "$tmp_config"-e
+    sed -i'' -e "s|apiUrl: http://pdns-service.default.svc.cluster.local|apiUrl: http://pdns-service.$ns.svc.cluster.local|g" "$tmp_config"
+    rm "$tmp_config"-e
   fi
+
+  kubectl apply -k base/ --context kind-$clustername
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.14.2/charts/external-dns/crds/dnsendpoint.yaml --context kind-$clustername
 
   RELEASE_NAME=external-dns-$cluster_id
   if release_exists; then
     echo "Helm release '$RELEASE_NAME' is already installed. Skipping."
   else
     echo "Helm release '$RELEASE_NAME' is not installed. Installing..."
-    helm install --kube-context kind-$clustername $RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/external-dns -f $tmp_config --set txtOwnerId=$clustername-
+    helm install --namespace $ns --kube-context kind-$clustername $RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/external-dns --version $external_dns_chart_version -f $tmp_config --set txtOwnerId=$clustername-
   fi
+  # Create a rolebinding for the external-dns service account to allow read of the dnsendpoints crd
+  kubectl --context kind-$clustername create clusterrolebinding dnsendpoint-read-binding-$cluster_id --namespace=dns --clusterrole=dnsendpoint-read --serviceaccount=dns:external-dns-$cluster_id
 done
 
 values_file="templates/core-dns-values.yaml"
-config_folder="tmp/cluster-$id_of_clusters"
+config_folder="tmp/cluster-$this_cluster_id"
 mkdir -p $config_folder
 tmp_config="$config_folder/core-dns-values.yaml"
 cp "$values_file" "$tmp_config"
@@ -113,7 +134,7 @@ for cluster in $clusters; do
   # Extract the last character of the cluster name as the cluster ID
   cluster_id=${cluster: -1}
 
-  if [ "$cluster_id" != "$id_of_clusters" ]; then
+  if [ "$cluster_id" != "$this_cluster_id" ]; then
     # Modify apiServerPort in the copied config file
     ipv4_address=$(get_ipv4_address "dns-$cluster_id-control-plane")
     sed -i'' -e "/parameters: 5gc.3gppnetwork.org. 10.96.0.12/ s/$/ $ipv4_address:30003/" "$tmp_config"
@@ -127,11 +148,11 @@ if release_exists; then
 else
     echo "Helm release '$RELEASE_NAME' is not installed. Installing..."
     helm repo add coredns https://coredns.github.io/helm
-    helm install --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f $tmp_config
+    helm install --namespace $ns --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f $tmp_config
 fi
 
 
-kubectl apply -k base/ --context kind-$clustername
+
 
 # docker pull registry.k8s.io/ingress-nginx/controller:v1.10.1
 # kind load docker-image registry.k8s.io/ingress-nginx/controller:v1.10.1 --name $clustername

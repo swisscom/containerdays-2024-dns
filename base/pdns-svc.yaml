@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pdns-service
+  namespace: dns
   annotations: 
     external-dns.alpha.kubernetes.io/internal-hostname: pdns-int.5gc.3gppnetwork.org.
 spec:
@@ -27,6 +28,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pdns-ext-service
+  namespace: dns
   annotations: 
     external-dns.alpha.kubernetes.io/hostname: pdns-ext.5gc.3gppnetwork.org.
 spec:
