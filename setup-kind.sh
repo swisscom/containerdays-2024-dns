@@ -59,6 +59,9 @@ kind load docker-image bitnami/external-dns:0.14.2 --name $clustername
 pull_image_if_not_exists bash "latest"
 kind load docker-image bash:latest --name $clustername
 
+pull_image_if_not_exists nginx "latest"
+kind load docker-image nginx:latest --name $clustername
+
 echo "checking for external-dns"
 
 release_exists() {
@@ -150,6 +153,7 @@ else
     helm repo add coredns https://coredns.github.io/helm
     helm install --namespace $ns --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f $tmp_config
 fi
+
 
 
 
