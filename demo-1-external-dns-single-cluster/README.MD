@@ -16,3 +16,5 @@ kubectl get nodes -o wide
 kubectl --context kind-dns-0 -n dns logs deploy/external-dns-0 --tail 5
 
 kubectl --context kind-dns-0 exec -it dnsutils -- dig nginx.5gc.3gppnetwork.org 10.96.0.12
+
+kubectl --context kind-dns-0 apply -f some-dns-endpoint-cr-1.yaml
