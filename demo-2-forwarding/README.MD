@@ -1,14 +1,33 @@
 # Demo 2: Forwarding
 
-## Setup from before:
-
+```
 kubectl --context kind-dns-0 get pods -n dns
+```
 
+```
 kubectl --context kind-dns-0 describe cm/coredns -n dns
+```
 
+```
 kubectl --context kind-dns-0 get pods -n dns -o wide
+```
 
-kubectl --context kind-dns-0 exec -it dnsutils -- dig nginx.5gc.3gppnetwork.org 10.244.0.8
+```
+kubectl --context kind-dns-0 exec -it dnsutils -- nslookup nginx.5gc.3gppnetwork.org
+```
 
-## For preparing the next demo whilest going through the slides execute:
-./demo-2-forwarding/prepare-demo3.sh
+```
+kubectl --context kind-dns-0 apply -f some-svc.yaml
+```
+
+```
+kubectl --context kind-dns-0 apply -f some-dns-endpoint-cr-1.yaml
+```
+
+```
+kubectl --context kind-dns-0 exec -it dnsutils -- nslookup nginx.5gc.3gppnetwork.org
+```
+
+```
+kubectl --context kind-dns-0 exec -it dnsutils -- nslookup endpoint1.5gc.3gppnetwork.org
+```
