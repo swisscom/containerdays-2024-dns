@@ -30,7 +30,7 @@ servers:
       - name: loadbalance
       # IMPORTANT: order of forwards is important
       - name: forward
-        parameters: 5gc.3gppnetwork.org. 10.96.0.12 172.18.0.3:30003 172.18.0.4:30003
+        parameters: 5gc.3gppnetwork.org. 10.96.0.12 172.18.0.3:30003
         configBlock: |-
           policy sequential
       - name: forward

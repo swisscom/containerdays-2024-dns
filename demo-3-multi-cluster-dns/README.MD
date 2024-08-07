@@ -15,11 +15,7 @@ kubectl --context kind-dns-1 exec -it dnsutils -- nslookup endpoint1.5gc.3gppnet
 ```
 
 ```
-kubectl --context kind-dns-2 exec -it dnsutils -- nslookup endpoint1.5gc.3gppnetwork.org
-```
-
-```
-kubectl --context kind-dns-2 apply -f some-dns-endpoint-cr-2.yaml
+kubectl --context kind-dns-1 apply -f some-dns-endpoint-cr-2.yaml
 ```
 
 ```
@@ -28,10 +24,6 @@ kubectl --context kind-dns-0 exec -it dnsutils -- nslookup endpoint2.5gc.3gppnet
 
 ```
 kubectl --context kind-dns-1 exec -it dnsutils -- nslookup endpoint2.5gc.3gppnetwork.org
-```
-
-```
-kubectl --context kind-dns-2 exec -it dnsutils -- nslookup endpoint2.5gc.3gppnetwork.org
 ```
 
 ```
