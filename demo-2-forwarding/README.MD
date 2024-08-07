@@ -1,5 +1,7 @@
 # Demo 2: Forwarding
 
+![single-cluster-dns-arch](single-cluster-dns-arch.png "Single Cluster DNS Architecture")
+
 ```
 kubectl --context kind-dns-0 get pods -n dns
 ```

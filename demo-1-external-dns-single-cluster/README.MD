@@ -1,5 +1,6 @@
 # Demo 1: ExternalDNS & PowerDNS Single Cluster
 
+![PowerDNS & ExternalDNS](powerdns-and-externaldns.png "PowerDNS & ExternalDNS")
 
 ```
 kubectl get svc -n dns -o wide | grep pdns-service

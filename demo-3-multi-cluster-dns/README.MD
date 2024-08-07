@@ -1,5 +1,7 @@
 # Demo 3 Multi-cluster DNS
 
+![dual-cluster-dns-arch](2-cluster-dns-arch.png "Dual Cluster DNS Architecture")
+
 ```
 kubectl --context kind-dns-0 apply -f some-dns-endpoint-cr-1.yaml
 ```
