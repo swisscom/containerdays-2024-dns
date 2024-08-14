@@ -23,7 +23,7 @@ kubectl --context kind-dns-0 apply -f some-svc.yaml
 ```
 
 ```
-kubectl --context kind-dns-0 apply -f some-dns-endpoint-cr-1.yaml
+kubectl --context kind-dns-0 apply -f dns-endpoint-cr.yaml
 ```
 
 ```

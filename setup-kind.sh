@@ -43,7 +43,7 @@ pull_image_if_not_exists() {
 }
 
 # Install Metallb
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+kubectl --context kind-$clustername apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
 
 pull_image_if_not_exists coredns/coredns "1.11.1"
 kind load docker-image coredns/coredns:1.11.1 --name $clustername
