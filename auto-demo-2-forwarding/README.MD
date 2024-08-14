@@ -7,5 +7,5 @@ This demo is using https://github.com/saschagrunert/demo, so to run the demo exe
 
 ```
 go build .
-./auto-demo-forwarindg -l
+./auto-demo-forwarding -l
 ```
