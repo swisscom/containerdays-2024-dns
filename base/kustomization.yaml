@@ -11,3 +11,4 @@ resources:
   - dnsutils-pod.yaml
   - kube-system-coredns-cm.yaml
   - dnsendpoint-read-role.yaml
+  - ip-address-pool.yaml

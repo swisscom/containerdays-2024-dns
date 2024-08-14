@@ -1,0 +1,11 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: examplednsrecordnaptr
+spec:
+  endpoints:
+  - dnsName: naptr.5gc.3gppnetwork.org
+    recordTTL: 180
+    recordType: NAPTR
+    targets:
+    - 1 1 "U" "123" "regular" naptrentry.5gc.3gppnetwork.org.

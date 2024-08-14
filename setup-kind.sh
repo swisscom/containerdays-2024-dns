@@ -7,7 +7,7 @@ NC='\033[0m' # No Color
 
 ns=dns
 
-# Check if id of cluster is porvided
+# Check if id of cluster is provided
 if [ -z "$1" ]; then
   echo -e "${RED}Error: Id of cluster to setup not provided${NC}"
   echo "Usage: $0 <id_of_cluster> [clusternameprefix]"
@@ -25,12 +25,13 @@ clusternameprefix=${2:-dns}  # Set default cluster name to 'dns' if not provided
 
 clustername="${clusternameprefix}-$this_cluster_id"
 
-# kind create cluster --name $clustername --config cluster-0-cfg.yaml  || { echo -e "${RED}Error: Failed to create cluster${NS}"; exit 1; }
+# Check if kind cluster exists
 if ! kind get clusters | grep -q "^${clustername}$"; then
   echo "Error: Kind cluster '${clustername}' does not exist."
   exit 1
 fi
 
+# Pull and load needed docker images into kind cluster
 pull_image_if_not_exists() {
   local image=$1
   local version=$2
@@ -40,6 +41,9 @@ pull_image_if_not_exists() {
     echo "Image $image already exists locally. Skipping pull."
   fi
 }
+
+# Install Metallb
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
 
 pull_image_if_not_exists coredns/coredns "1.11.1"
 kind load docker-image coredns/coredns:1.11.1 --name $clustername
@@ -62,7 +66,6 @@ kind load docker-image bash:latest --name $clustername
 pull_image_if_not_exists nginx "latest"
 kind load docker-image nginx:latest --name $clustername
 
-echo "checking for external-dns"
 
 release_exists() {
     helm list --kube-context kind-$clustername --namespace $ns | grep -w "$RELEASE_NAME" > /dev/null 2>&1
@@ -71,11 +74,34 @@ release_exists() {
 
 get_ipv4_address() {
   local container_name=$1
-
   docker network inspect kind | jq -r --arg name "$container_name" '.[] | .Containers[] | select(.Name == $name) | .IPv4Address' | cut -d'/' -f1
 }
 
-clusters=$(kind get clusters)
+
+
+DEPLOYMENT_NAME="controller"
+NAMESPACE="metallb-system"
+while true; do
+  # Check if the deployment is ready
+  READY_REPLICAS=$(kubectl get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.status.readyReplicas}')
+  DESIRED_REPLICAS=$(kubectl get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.status.replicas}')
+  
+  if [[ "$READY_REPLICAS" == "$DESIRED_REPLICAS" ]] && [[ "$READY_REPLICAS" -gt 0 ]]; then
+    echo "Deployment $DEPLOYMENT_NAME is ready."
+    break
+  else
+    echo "Waiting... Ready replicas: $READY_REPLICAS / $DESIRED_REPLICAS"
+    sleep 5
+  fi
+done
+
+sleep 5
+
+kubectl apply -k base/ --context kind-$clustername
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.14.2/charts/external-dns/crds/dnsendpoint.yaml --context kind-$clustername
+
+
+clusters=$(kind get clusters | grep dns)
 external_dns_chart_version="8.3.3"
 
 for cluster in $clusters; do
@@ -90,7 +116,6 @@ for cluster in $clusters; do
   # Make a temporary copy of the configuration file
   cp "$values_file" "$tmp_config"
 
-  echo "before $cluster_id $this_cluster_id and dns is $ns"
 
   # Modify txtOwnerId in the copied config file for each external-dns instance
   sed -i'' -e "s|txtOwnerId: \"dns-\"|txtOwnerId: \"dns-$cluster_id\"|g" "$tmp_config"
@@ -112,9 +137,6 @@ for cluster in $clusters; do
     sed -i'' -e "s|apiUrl: http://pdns-service.default.svc.cluster.local|apiUrl: http://pdns-service.$ns.svc.cluster.local|g" "$tmp_config"
     rm "$tmp_config"-e
   fi
-
-  kubectl apply -k base/ --context kind-$clustername
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.14.2/charts/external-dns/crds/dnsendpoint.yaml --context kind-$clustername
 
   RELEASE_NAME=external-dns-$cluster_id
   if release_exists; then
