@@ -1,6 +1,7 @@
 # containerdays-2024-dns
 Resources used for the ContainerDays 2024 Talk «Building and Operating a Highly Reliable Cloud Native DNS Service With Open Source Technologies»
 
+
 ## Authors
 
 Please feel free to approach us with feedback and questions!
@@ -20,7 +21,7 @@ For docker engine / virtualization we use [colima](https://github.com/abiosoft/c
 
 ## Prerequisites
 
-- colima (We use colima to run docker on our Mac's, any other virtualization should also work.):
+- colima:
   - brew install colima
   - colima start dns1 -c 4 -m 4 --network-address
   - colima ssh -p dns1 # ssh onto colima node
