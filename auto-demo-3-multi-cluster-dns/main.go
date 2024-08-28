@@ -20,7 +20,7 @@ func main() {
 func demo1() *demo.Run {
 	r := demo.NewRun("Demo DNS multi-cluster")
 
-	r.Step(demo.S("List yamls in directory"), demo.S("ls | grep .yaml"))
+	r.Step(nil, demo.S("ls | grep .yaml"))
 	r.Step(demo.S("Show dns-endpoint-cr-1.yaml content"), demo.S("cat dns-endpoint-cr-1.yaml"))
 	r.Step(demo.S("Apply dns-endpoint-cr-1.yaml to cluster 0"), demo.S("kubectl --context kind-dns-0 apply -f dns-endpoint-cr-1.yaml"))
 	r.Step(demo.S("Lookup endpoint1.5gc.3gppnetwork.org using default node DNS in cluster 0"), demo.S("kubectl --context kind-dns-0 exec -t dnsutils -- nslookup endpoint1.5gc.3gppnetwork.org"))

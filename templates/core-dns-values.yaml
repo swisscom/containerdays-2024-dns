@@ -5,10 +5,11 @@ image:
 rbac:
   create: true
 
-isClusterService: false
+isClusterService: true
 
 service:
-  clusterIP: "10.96.0.11"
+  clusterIP: 10.96.0.11
+
 
 servers:
   - zones:

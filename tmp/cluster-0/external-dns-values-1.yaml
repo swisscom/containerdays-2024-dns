@@ -71,8 +71,8 @@ txtSuffix: ""
 provider: pdns
 
 pdns:
-  apiUrl: http://172.18.0.3
-  apiPort: 30004
+  apiUrl: http://172.18.2.1
+  apiPort: 8081
   apiKey: "auth_key"
 
 extraVolumes:
@@ -93,7 +93,7 @@ initContainers:
         value: "5gc.3gppnetwork.org."
       # PowerDNS configuration
       - name: POWERDNS_SERVER
-        value: http://172.18.0.3:30004
+        value: http://172.18.2.1:8081
       - name: POWERDNS_API_KEY
         value: "auth_key"
       # set to true if you want debug prints from the startup script

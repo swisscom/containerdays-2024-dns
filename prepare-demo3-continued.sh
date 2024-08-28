@@ -3,8 +3,6 @@
 # Get the directory of the current script
 SCRIPT_DIR=$(dirname "$0")
 
-# Destroy the single kind cluster
-"$SCRIPT_DIR/destroy-kind.sh" 1
 # Create 3 kind clusters
 "$SCRIPT_DIR/create-kind-clusters.sh" 2
 

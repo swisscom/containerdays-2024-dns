@@ -30,7 +30,7 @@ metadata:
   name: pdns-ext-service
   namespace: dns
   annotations: 
-    external-dns.alpha.kubernetes.io/hostname: pdns-ext.5gc.3gppnetwork.org.
+    external-dns.alpha.kubernetes.io/hostname: pdns.5gc.3gppnetwork.org.
 spec:
   selector:
     app: pdns
@@ -39,15 +39,12 @@ spec:
       port: 8081
       targetPort: 8081
       name: api
-      nodePort: 30004
     - port: 53
       targetPort: 53
       protocol: UDP
       name: dns-udp
-      nodePort: 30003
     - port: 53
       targetPort: 53
       protocol: TCP
       name: dns-tcp
-      nodePort: 30003
-  type: NodePort
+  type: LoadBalancer

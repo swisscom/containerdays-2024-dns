@@ -36,6 +36,11 @@ do
     sed -i'' -e "s/apiServerPort: 6443/apiServerPort: $((6443 + i))/g" "$temp_config"
     rm "$temp_config"-e
 
+    # check if cluster exists
+    if kind get clusters | grep -q "^${clustername}-${i}$"; then
+      echo "Cluster ${clustername}-${i} already exists. Skipping creation."
+      continue
+    fi
     kind create cluster --name $clustername-$i --config $temp_config || { echo -e "${RED}Error: Failed to create cluster ${clustername}-${i}${NC}"; rm -f "$temp_config"; exit 1; }
 
   else

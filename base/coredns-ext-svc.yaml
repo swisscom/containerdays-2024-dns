@@ -4,19 +4,17 @@ metadata:
   name: coredns-ext-service
   namespace: dns
   annotations: 
-    external-dns.alpha.kubernetes.io/hostname: coredns-ext.5gc.3gppnetwork.org.
+    external-dns.alpha.kubernetes.io/hostname: coredns.5gc.3gppnetwork.org.
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app.kubernetes.io/name: coredns
   ports:
     - protocol: UDP
       port: 53
       targetPort: 53
-      nodePort: 30001
       name: upd-dns
     - protocol: TCP
       port: 53
       targetPort: 53
-      nodePort: 30001
       name: tcp-dns
