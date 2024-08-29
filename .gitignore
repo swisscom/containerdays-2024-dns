@@ -1,3 +1,4 @@
 demo-1-external-dns/demo-1
-auto-demo-2-forwarding/auto-demo-2-forwarding
-auto-demo-3-multi-cluster-dns/auto-demo-3-multi-cluster-dns
+demo-2-forwarding/demo-2
+demo-3-multi-cluster-dns/demo-3
+tmp/*

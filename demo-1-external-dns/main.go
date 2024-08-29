@@ -20,15 +20,15 @@ func main() {
 func demo1() *demo.Run {
 	r := demo.NewRun("Apply SVC and DNSEndpoint and let ExternalDNS sync to PowerDNS")
 
-	r.Step(nil, demo.S("kubectl get pods --all-namespaces"))
+	r.Step(nil, demo.S("kubectl get pods -n dns"))
 	r.Step(nil, demo.S("cat svc.yaml"))
-	r.Step(nil, demo.S("kubectl --context kind-dns-0 apply -f svc.yaml"))
-	r.Step(nil, demo.S("kubectl --context kind-dns-0 -n dns logs deploy/external-dns-0 --tail 10"))
-	r.Step(nil, demo.S("kubectl --context kind-dns-0 exec -t dnsutils -- dig +noall +answer nginx.5gc.3gppnetwork.org @p10.96.0.12"))
+	r.Step(nil, demo.S("kubectl apply -f svc.yaml"))
+	r.Step(nil, demo.S("kubectl -n dns logs deploy/external-dns-0 --tail 10"))
+	r.Step(nil, demo.S("kubectl exec -t dnsutils -- dig +noall +answer nginx.5gc.3gppnetwork.org @10.96.0.12"))
 	r.Step(nil, demo.S("cat dns-endpoint-cr.yaml"))
-	r.Step(nil, demo.S("kubectl --context kind-dns-0 apply -f dns-endpoint-cr.yaml"))
-	r.Step(nil, demo.S("kubectl --context kind-dns-0 -n dns logs deploy/external-dns-0 --tail 10"))
-	r.Step(nil, demo.S("kubectl --context kind-dns-0 exec -t dnsutils -- dig +noall +answer endpoint1.5gc.3gppnetwork.org @p10.96.0.12"))
+	r.Step(nil, demo.S("kubectl apply -f dns-endpoint-cr.yaml"))
+	r.Step(nil, demo.S("kubectl -n dns logs deploy/external-dns-0 --tail 10"))
+	r.Step(nil, demo.S("kubectl exec -t dnsutils -- dig +noall +answer endpoint1.5gc.3gppnetwork.org @10.96.0.12"))
 	return r
 }
 

@@ -1,4 +1,4 @@
-module code.swisscom.com/swisscom/mobile/playground/nike/multicluster-dns-demo/auto-demo-3-multi-cluster-dns
+module demo-2
 
 go 1.22.5
 

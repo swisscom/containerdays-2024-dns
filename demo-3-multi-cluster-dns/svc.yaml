@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-deployment
+  namespace: dns
 spec:
   selector:
     matchLabels:
@@ -25,11 +26,10 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/hostname: nginx.5gc.3gppnetwork.org
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: nginx
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30000

@@ -1,4 +1,4 @@
-module auto-demo-2-forwarding
+module demo-3
 
 go 1.22.5
 
