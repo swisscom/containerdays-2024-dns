@@ -17,9 +17,9 @@ data:
            ttl 30
         }
         prometheus :9153
-        forward 5gc.3gppnetwork.org. 10.96.0.11
-        forward . /etc/resolv.conf {
+        forward . 10.96.0.11 /etc/resolv.conf {
            max_concurrent 1000
+           policy sequential
         }
         loop
         reload
