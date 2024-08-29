@@ -23,5 +23,5 @@ while true; do
 done
 
 # Deploy the multicluster dns in all 2 clusters
-"$SCRIPT_DIR/setup-kind.sh" 0
 "$SCRIPT_DIR/setup-kind.sh" 1
+"$SCRIPT_DIR/setup-kind.sh" 0
