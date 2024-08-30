@@ -19,7 +19,7 @@ go build .
 
 ### Show logs of externalDNS-1 deployment
 ```
-kubectl --context kind-dns-0 logs deploy/external-dns-1
+kubectl --context kind-dns-0 -n dns logs deploy/external-dns-1
 ```
 
 ### Lookup nginx in cluster 1
@@ -32,7 +32,7 @@ kubectl --context kind-dns-1 exec -it dnsutils -- nslookup nginx.5gc.3gppnetwork
 kubectl --context kind-dns-1 exec -it dnsutils -- nslookup endpoint1.5gc.3gppnetwork.org
 ```
 
-### Cat dns-enpoint-cr-2.yaml
+### Cat dns-endpoint-cr-2.yaml
 ```
 cat dns-endpoint-cr-2.yaml
 ```
@@ -45,15 +45,15 @@ kubectl --context kind-dns-1 apply -f dns-endpoint-cr-2.yaml
 
 ### Show logs of externalDNS-1 deployment in cluster 1
 ```
-kubectl --context kind-dns-1 logs deploy/external-dns-1
+kubectl --context kind-dns-1 -n dns logs deploy/external-dns-1
 ```
 
 ### Show logs of externalDNS-0 deployment in cluster 1
 ```
-kubectl --context kind-dns-1 logs deploy/external-dns-0
+kubectl --context kind-dns-1 -n dns logs deploy/external-dns-0
 ```
 
-### Lookup enppoint2 in cluster 0
+### Lookup endpoint2 in cluster 0
 ```
 kubectl --context kind-dns-0 exec -it dnsutils -- nslookup endpoint2.5gc.3gppnetwork.org
 ```
@@ -73,14 +73,14 @@ kubectl --context kind-dns-0 exec -it dnsutils -- nslookup nginx.5gc.3gppnetwork
 kubectl --context kind-dns-0 apply -f dns-endpoint-cr-3.yaml
 ```
 
-### Lookup endpoint3 in cluster 0
-```
-kubectl --context kind-dns-0 exec -it dnsutils -- nslookup endpoint3.5gc.3gppnetwork.org
-```
-
 ### Lookup endpoint3 in cluster 1
 ```
 kubectl --context kind-dns-1 exec -it dnsutils -- nslookup endpoint3.5gc.3gppnetwork.org
+```
+
+### Lookup endpoint3 in cluster 0
+```
+kubectl --context kind-dns-0 exec -it dnsutils -- nslookup endpoint3.5gc.3gppnetwork.org
 ```
 
 ### Scale down coredns deployment to 0 in cluster 0
@@ -100,10 +100,10 @@ kubectl --context kind-dns-0 exec -it dnsutils -- nslookup google.com
 
 ### Scale up powerDNS deployment to 1 in cluster 0
 ```
-kubectl --context kind-dns-0 -n dns scale deployment pdns-deployment --replicas=0
+kubectl --context kind-dns-0 -n dns scale deployment pdns-deployment --replicas=1
 ```
 
 ### Show logs of externalDNS-0 deployment in cluster 0
 ```
-kubectl --context kind-dns-0 logs deploy/external-dns-0
+kubectl --context kind-dns-0 -n dns logs deploy/external-dns-0
 ```
