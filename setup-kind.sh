@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script sets up the specified kind cluster with the necessary components and copies all the required configuration files into the tmp folder.
+# During the demo we create a 2 kind cluster deployment but this script also supports setting up deployments with more than 2 clusters.
+
 set -e
 # Define colors
 RED='\033[0;31m'
@@ -33,6 +36,9 @@ fi
 
 echo "Setting up cluster '$clustername'..."
 
+# Install Metallb
+kubectl --context kind-$clustername apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+
 # Pull and load needed docker images into kind cluster
 pull_image_if_not_exists() {
   local image=$1
@@ -43,9 +49,6 @@ pull_image_if_not_exists() {
     echo "Image $image already exists locally. Skipping pull."
   fi
 }
-
-# Install Metallb
-kubectl --context kind-$clustername apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
 
 pull_image_if_not_exists coredns/coredns "1.11.1"
 kind load docker-image coredns/coredns:1.11.1 --name $clustername
@@ -74,15 +77,10 @@ release_exists() {
     return $?
 }
 
-get_ipv4_address() {
-  local container_name=$1
-  docker network inspect kind | jq -r --arg name "$container_name" '.[] | .Containers[] | select(.Name == $name) | .IPv4Address' | cut -d'/' -f1
-}
-
+# Wait for the controller deployment to be ready
 DEPLOYMENT_NAME="controller"
 NAMESPACE="metallb-system"
 while true; do
-  # Check if the deployment is ready
   READY_REPLICAS=$(kubectl --context kind-$clustername get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.status.readyReplicas}')
   DESIRED_REPLICAS=$(kubectl --context kind-$clustername get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.status.replicas}')
   
@@ -97,16 +95,18 @@ done
 
 sleep 5
 
+# Apply the base yaml files and the external-dns crd
 kubectl apply -k base/ --context kind-$clustername
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.14.2/charts/external-dns/crds/dnsendpoint.yaml --context kind-$clustername
 
+# Prepare the ip pool configuration file
 pool_file="templates/ip-address-pool.yaml"
 config_folder="tmp/cluster-$this_cluster_id"
 mkdir -p $config_folder
 tmp_config="$config_folder/ip-address-pool.yaml"
 cp "$pool_file" "$tmp_config"
 
-# Modify ip pool in the copied config file
+# Modify ip pool in the copied config file depending on cluster id
 pool_id=$((this_cluster_id + 1))
 echo "Modifying ip pool in the copied config file to 172.18.$pool_id.0/24"
 sed -i'' -e "s|    - 172.18.1.0/24|    - 172.18.$pool_id.0/24|g" "$tmp_config"
@@ -115,19 +115,19 @@ rm "$tmp_config"-e
 # Apply the ip pool configuration
 kubectl apply -f $tmp_config --context kind-$clustername
 
+# Install external-dns
 clusters=$(kind get clusters | grep dns)
 external_dns_chart_version="8.3.3"
 
 for cluster in $clusters; do
-  # Extract the last character of the cluster name as the cluster ID
   cluster_id=${cluster: -1}
   
+  # Prepare the external-dns configuration file
   values_file="templates/external-dns-values.yaml"
   config_folder="tmp/cluster-$this_cluster_id"
   mkdir -p $config_folder
   tmp_config="$config_folder/external-dns-values-$cluster_id.yaml"
 
-  # Make a temporary copy of the configuration file
   cp "$values_file" "$tmp_config"
 
 
@@ -136,17 +136,15 @@ for cluster in $clusters; do
   rm "$tmp_config"-e
 
   if [ "$cluster_id" != "$this_cluster_id" ]; then
-    # Modify apiServerPort in the copied config file
+    # Modify ip in the copied config file with the loadbalancer ip of the pdns service from the other clusters
     echo "Modifying apiServerPort in the copied config file and the namespace is $ns"
-    # ipv4_address=$(get_ipv4_address "dns-$cluster_id-control-plane")
     ipv4_address=$(kubectl --context kind-dns-$cluster_id get svc pdns-ext-service -n dns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-    # sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: http://$ipv4_address:30004|g" "$tmp_config"
     sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: http://$ipv4_address:8081|g" "$tmp_config"
     rm "$tmp_config"-e
     sed -i'' -e "s|apiUrl: http://pdns-service.default.svc.cluster.local|apiUrl: http://$ipv4_address|g" "$tmp_config"
-    # sed -i'' -e "s|apiPort: 8081|apiPort: 30004|g" "$tmp_config"
     rm "$tmp_config"-e
   else
+    # Modify ip in the copied config file with the loadbalancer ip of the pdns service from this cluster
     echo "Modifying apiServerPort in the copied config file and the namespace is $ns"
     sed -i'' -e "s|value: \"http://pdns-service.default.svc.cluster.local:8081\"|value: http://pdns-service.$ns.svc.cluster.local:8081|g" "$tmp_config"
     rm "$tmp_config"-e
@@ -170,6 +168,7 @@ for cluster in $clusters; do
   fi
 done
 
+# Install CoreDNS
 values_file="templates/core-dns-values.yaml"
 config_folder="tmp/cluster-$this_cluster_id"
 mkdir -p $config_folder
@@ -177,15 +176,12 @@ tmp_config="$config_folder/core-dns-values.yaml"
 cp "$values_file" "$tmp_config"
 
 for cluster in $clusters; do
-  # Extract the last character of the cluster name as the cluster ID
   cluster_id=${cluster: -1}
 
   if [ "$cluster_id" != "$this_cluster_id" ]; then
-    # Modify apiServerPort in the copied config file
-    # ipv4_address=$(get_ipv4_address "dns-$cluster_id-control-plane")
+    # Modify ip in the copied config file to add the loadbalancer ip of the coredns service from the other clusters
     ipv4_address=$(kubectl --context kind-dns-$cluster_id get svc coredns-ext-service -n dns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
     sed -i'' -e "/parameters: 5gc.3gppnetwork.org. 10.96.0.12/ s/$/ $ipv4_address/" "$tmp_config"
-    # sed -i'' -e "/parameters: 5gc.3gppnetwork.org. 10.96.0.12/ s/$/ $ipv4_address:30003/" "$tmp_config"
     rm "$tmp_config"-e
   fi
 done
@@ -198,11 +194,3 @@ else
     helm repo add coredns https://coredns.github.io/helm
     helm install --namespace $ns --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f $tmp_config
 fi
-
-
-# docker pull registry.k8s.io/ingress-nginx/controller:v1.10.1
-# kind load docker-image registry.k8s.io/ingress-nginx/controller:v1.10.1 --name $clustername
-# docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1
-# kind load docker-image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1 --name $clustername
-
-# kubectl apply -f nginx-ingress.yaml --context kind-$clustername

@@ -24,28 +24,34 @@ For docker engine / virtualization we use [colima](https://github.com/abiosoft/c
   - brew install colima
   - colima start dns1 -c 4 -m 4 --network-address
   - colima ssh -p dns1 # ssh onto colima node
-    - edit /etc/sysctl.conf and add:
+    - edit /etc/sysctl.conf and add: # We need to increase the file handler limit of the linux distro
       - fs.inotify.max_user_watches = 1048576
       - fs.inotify.max_user_instances = 512
-    - sudo sysctl fs.inotify.max_user_watches=524288
-    - sudo sysctl fs.inotify.max_user_instances=512
+  - colima restart dns1
 - docker cli: brew install docker
 - kind: brew install kind
 
-## Environment setup
+## Demo Environment setup
 
-To create 3 kind clusters execute:
-./create-kind-clusters.sh 3
+Call the prepare-demo scripts without parameters to create your environment. The prepare-demo scripts 2 & 3 come in two flavours:
+- prepare-demoX-fresh.sh which first deletes the kind clusters and sets them up from scratch
+- prepare-demoX-continued.sh which keeps the setup from the previous demo 
 
-The clusters will be named dns-0, dns-1, dns-2.
+## Manual Environment setup
+
+Use the create-kind-clusters.sh and setup-kind.sh scripts to create your environment. Below are the instructions for a 2-cluster setup, the scripts also support more than two if your machine does.
+
+To create 2 kind clusters execute:
+./create-kind-clusters.sh 2
+
+The clusters will be named dns-0, dns-1.
 
 The setup script accepts the cluster id and an optional clusternameprefix parameter, so call it for each cluster like that:
 
 - ./setup-kind.sh 0
 - ./setup-kind.sh 1
-- ./setup-kind.sh 2
 
 ## Environment teardown
 
 To teardown the kind clusters simply execute:
-./destroy-kind.sh 3
+./destroy-kind.sh 2

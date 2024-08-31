@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script creates the specified number of kind clusters
+
 set -e
 # Define colors
 RED='\033[0;31m'

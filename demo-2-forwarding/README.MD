@@ -34,13 +34,6 @@ kubectl describe cm/coredns -n dns
 kubectl get svc -n dns
 ```
 
-### Dig nginx service from local machine using coredns loadbalancer ip
-
-```
-colima ssh -p dns1
-dig +noall +answer nginx.5gc.3gppnetwork.org @172.18.1.0
-```
-
 ### Show kube-system coredns configmap
 
 ```
@@ -57,4 +50,11 @@ kubectl exec -it dnsutils -- dig +noall +answer nginx.5gc.3gppnetwork.org
 
 ```
 kubectl exec -it dnsutils -- nslookup endpoint1.5gc.3gppnetwork.org
+```
+
+### Dig nginx service from local machine using coredns loadbalancer ip
+
+```
+colima ssh -p dns1
+dig +noall +answer nginx.5gc.3gppnetwork.org @172.18.1.0
 ```
