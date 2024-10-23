@@ -67,5 +67,5 @@ kubectl -n dns logs deploy/external-dns-0 --tail 10
 
 ### 8. Dig PowerDNS for endpoint1 record
 ```
-kubectl --context kind-dns-1 exec -it dnsutils -- dig +noall +answer endpoint1.5gc.3gppnetwork.org @10.96.0.12
+kubectl exec -it dnsutils -- dig +noall +answer endpoint1.5gc.3gppnetwork.org @10.96.0.12
 ```
