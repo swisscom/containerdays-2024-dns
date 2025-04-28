@@ -19,12 +19,13 @@ fi
 
 # Check if the first parameter is a number
 re='^[0-9]+$'
-if ! [[ $1 =~ $re ]] ; then
-   echo -e "${RED}Error: '$1' is not a number${NC}" >&2; exit 1
+if ! [[ $1 =~ $re ]]; then
+  echo -e "${RED}Error: '$1' is not a number${NC}" >&2
+  exit 1
 fi
 
 this_cluster_id=$1
-clusternameprefix=${2:-dns}  # Set default cluster name to 'dns' if not provided
+clusternameprefix=${2:-dns} # Set default cluster name to 'dns' if not provided
 
 clustername="${clusternameprefix}-$this_cluster_id"
 
@@ -50,8 +51,9 @@ pull_image_if_not_exists() {
   fi
 }
 
-pull_image_if_not_exists coredns/coredns "1.11.1"
-kind load docker-image coredns/coredns:1.11.1 --name $clustername
+core_dns_chart_version="1.40.0"
+pull_image_if_not_exists coredns/coredns "1.12.0"
+kind load docker-image coredns/coredns:1.12.0 --name $clustername
 
 pull_image_if_not_exists infoblox/dnstools "latest"
 kind load docker-image infoblox/dnstools:latest --name $clustername
@@ -59,11 +61,12 @@ kind load docker-image infoblox/dnstools:latest --name $clustername
 pull_image_if_not_exists registry.k8s.io/e2e-test-images/jessie-dnsutils 1.3
 kind load docker-image registry.k8s.io/e2e-test-images/jessie-dnsutils:1.3 --name $clustername
 
-pull_image_if_not_exists powerdns/pdns-auth-49 "latest"
+pull_image_if_not_exists powerdns/pdns-auth-49 "4.9.4"
 kind load docker-image powerdns/pdns-auth-49 --name $clustername
 
-pull_image_if_not_exists bitnami/external-dns "0.14.2"
-kind load docker-image bitnami/external-dns:0.14.2 --name $clustername
+external_dns_chart_version="8.8.0"
+pull_image_if_not_exists bitnami/external-dns "0.16.1"
+kind load docker-image bitnami/external-dns:0.16.1 --name $clustername
 
 pull_image_if_not_exists bash "latest"
 kind load docker-image bash:latest --name $clustername
@@ -71,10 +74,9 @@ kind load docker-image bash:latest --name $clustername
 pull_image_if_not_exists nginx "latest"
 kind load docker-image nginx:latest --name $clustername
 
-
 release_exists() {
-    helm list --kube-context kind-$clustername --namespace $ns | grep -w "$RELEASE_NAME" > /dev/null 2>&1
-    return $?
+  helm list --kube-context kind-$clustername --namespace $ns | grep -w "$RELEASE_NAME" >/dev/null 2>&1
+  return $?
 }
 
 # Wait for the controller deployment to be ready
@@ -83,7 +85,7 @@ NAMESPACE="metallb-system"
 while true; do
   READY_REPLICAS=$(kubectl --context kind-$clustername get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.status.readyReplicas}')
   DESIRED_REPLICAS=$(kubectl --context kind-$clustername get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.status.replicas}')
-  
+
   if [[ "$READY_REPLICAS" == "$DESIRED_REPLICAS" ]] && [[ "$READY_REPLICAS" -gt 0 ]]; then
     echo "Deployment $DEPLOYMENT_NAME is ready."
     break
@@ -97,7 +99,7 @@ sleep 5
 
 # Apply the base yaml files and the external-dns crd
 kubectl apply -k base/ --context kind-$clustername
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.14.2/charts/external-dns/crds/dnsendpoint.yaml --context kind-$clustername
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/v0.16.1/charts/external-dns/crds/dnsendpoint.yaml --context kind-$clustername
 
 # Prepare the ip pool configuration file
 pool_file="templates/ip-address-pool.yaml"
@@ -117,11 +119,10 @@ kubectl apply -f $tmp_config --context kind-$clustername
 
 # Install external-dns
 clusters=$(kind get clusters | grep dns)
-external_dns_chart_version="8.3.3"
 
 for cluster in $clusters; do
   cluster_id=${cluster: -1}
-  
+
   # Prepare the external-dns configuration file
   values_file="templates/external-dns-values.yaml"
   config_folder="tmp/cluster-$this_cluster_id"
@@ -129,7 +130,6 @@ for cluster in $clusters; do
   tmp_config="$config_folder/external-dns-values-$cluster_id.yaml"
 
   cp "$values_file" "$tmp_config"
-
 
   # Modify txtOwnerId in the copied config file for each external-dns instance
   sed -i'' -e "s|txtOwnerId: \"dns-\"|txtOwnerId: \"dns-$cluster_id\"|g" "$tmp_config"
@@ -160,7 +160,7 @@ for cluster in $clusters; do
     helm install --namespace $ns --kube-context kind-$clustername $RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/external-dns --version $external_dns_chart_version -f $tmp_config --set txtOwnerId=$clustername-
   fi
   # Create a rolebinding for the external-dns service account to allow read of the dnsendpoints crd if it does not exist
-  if kubectl --context kind-$clustername get clusterrolebinding dnsendpoint-read-binding-$cluster_id > /dev/null 2>&1; then
+  if kubectl --context kind-$clustername get clusterrolebinding dnsendpoint-read-binding-$cluster_id >/dev/null 2>&1; then
     echo "ClusterRoleBinding 'dnsendpoint-read-binding-$cluster_id' already exists. Skipping creation."
   else
     echo "Creating ClusterRoleBinding 'dnsendpoint-read-binding-$cluster_id'."
@@ -188,9 +188,9 @@ done
 
 RELEASE_NAME=coredns
 if release_exists; then
-    echo "Helm release '$RELEASE_NAME' is already installed. Skipping."
+  echo "Helm release '$RELEASE_NAME' is already installed. Skipping."
 else
-    echo "Helm release '$RELEASE_NAME' is not installed. Installing..."
-    helm repo add coredns https://coredns.github.io/helm
-    helm install --namespace $ns --kube-context kind-$clustername $RELEASE_NAME coredns/coredns -f $tmp_config
+  echo "Helm release '$RELEASE_NAME' is not installed. Installing..."
+  helm repo add coredns https://coredns.github.io/helm
+  helm install --namespace $ns --kube-context kind-$clustername --version $core_dns_chart_version $RELEASE_NAME coredns/coredns -f $tmp_config
 fi
