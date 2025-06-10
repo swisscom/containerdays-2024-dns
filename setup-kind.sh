@@ -194,3 +194,39 @@ else
   helm repo add coredns https://coredns.github.io/helm
   helm install --namespace $ns --kube-context kind-$clustername --version $core_dns_chart_version $RELEASE_NAME coredns/coredns -f $tmp_config
 fi
+
+tmp_config=$(mktemp)
+
+# 1. Fetch the current CoreDNS ConfigMap from *this* cluster
+kubectl --context kind-$clustername -n kube-system \
+  get configmap coredns -o yaml >"$tmp_config"
+
+# 2. Walk the other clusters and patch the forward line
+for cluster in $clusters; do
+  cluster_id=${cluster: -1}
+
+  if [ "$cluster_id" != "$this_cluster_id" ]; then
+    # LoadBalancer IP of CoreDNS in the *other* cluster
+    ipv4_address=$(kubectl --context "kind-dns-$cluster_id" \
+      -n dns \
+      get svc coredns-ext-service \
+      -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    # Append that IP right after 10.96.0.11 but before /etc/resolv.conf
+    # – keeps the spacing intact and is safe for GNU *and* BSD sed.
+    # sed -i'' -e "/forward: . 10.96.0.11/ s/$/ $ipv4_address/" "$tmp_config"
+    # rm "$tmp_config"-e
+    tmp_out=$(mktemp)
+    awk -v ip="$ipv4_address" '
+      # Look for a line containing "forward . 10.96.0.11" and " /etc/resolv.conf"
+      /^[[:space:]]*forward[[:space:]]+\.[[:space:]]+10\.96\.0\.11 .*\/etc\/resolv\.conf/ {
+        # Replace "10.96.0.11" with "10.96.0.11 <ip>"
+        sub(/10\.96\.0\.11/, "10.96.0.11 " ip)
+      }
+      { print }
+    ' "$tmp_config" >"$tmp_out" && mv "$tmp_out" "$tmp_config"
+
+  fi
+done
+# 3. Apply the modified ConfigMap back to *this* cluster
+kubectl --context kind-$clustername apply -f "$tmp_config"
+rm -f "$tmp_config"
