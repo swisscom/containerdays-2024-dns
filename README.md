@@ -1,3 +1,5 @@
+# This repo is archived, please find the newest resources and more in the following repository: https://github.com/swisscom/cloud-native-telco
+
 # containerdays-2024-dns
 Resources used for the ContainerDays 2024 Talk «Building and Operating a Highly Reliable Cloud Native DNS Service With Open Source Technologies»
 
