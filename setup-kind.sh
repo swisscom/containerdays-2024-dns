@@ -62,7 +62,7 @@ pull_image_if_not_exists registry.k8s.io/e2e-test-images/jessie-dnsutils 1.3
 kind load docker-image registry.k8s.io/e2e-test-images/jessie-dnsutils:1.3 --name $clustername
 
 pull_image_if_not_exists powerdns/pdns-auth-49 "4.9.4"
-kind load docker-image powerdns/pdns-auth-49 --name $clustername
+kind load docker-image powerdns/pdns-auth-49:4.9.4 --name $clustername
 
 external_dns_chart_version="8.8.0"
 pull_image_if_not_exists bitnami/external-dns "0.16.1"
@@ -180,7 +180,7 @@ for cluster in $clusters; do
 
   if [ "$cluster_id" != "$this_cluster_id" ]; then
     # Modify ip in the copied config file to add the loadbalancer ip of the coredns service from the other clusters
-    ipv4_address=$(kubectl --context kind-dns-$cluster_id get svc coredns-ext-service -n dns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    ipv4_address=$(kubectl --context kind-dns-$cluster_id get svc pdns-ext-service -n dns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
     sed -i'' -e "/parameters: 5gc.3gppnetwork.org. 10.96.0.12/ s/$/ $ipv4_address/" "$tmp_config"
     rm "$tmp_config"-e
   fi
